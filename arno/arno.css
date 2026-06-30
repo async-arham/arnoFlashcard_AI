@@ -849,6 +849,7 @@ nav {
 }
 
 /* ── RESPONSIVE ── */
+
 @media (max-width: 640px) {
     .page {
         padding: 24px 16px 60px;
@@ -896,6 +897,46 @@ nav {
 
     .hero p {
         font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 {
+        font-size: 1.5rem;
+    }
+
+    .hero p {
+        font-size: 0.8rem;
+    }
+
+    .upload-drop h3 {
+        font-size: 0.9rem;
+    }
+
+    .upload-drop p {
+        font-size: 0.8rem;
+    }
+
+    .abs1 img,
+    .abs2 img {
+        z-index: -1;
+    }
+
+    .panel-sub {
+        font-size: 0.7rem;
+    }
+
+    .nav-title {
+        font-size: 1.1rem;
+    }
+
+    .nav-title img {
+        margin: 0px 5px;
+        width: 27px;
+    }
+
+    .chip{
+        font-size: 0.6rem;
     }
 }
 
