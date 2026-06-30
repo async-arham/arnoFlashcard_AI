@@ -8,7 +8,7 @@
 // you forget — replace/remove it once you've set the real env var.
 const API_KEY = process.env.OPENROUTER_API_KEY || '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';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'nvidia/nemotron-nano-12b-v2-vl:free';
+const MODEL = 'qwen/qwen3-next-80b-a3b-instruct:free';
 
 export const config = {
   maxDuration: 60, // allow the function up to 60s (set in vercel.json too, for Hobby/Pro compatibility)
