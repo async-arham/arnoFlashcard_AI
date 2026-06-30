@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arno • AI Flashcard Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="shortcut icon" href="img/arno_logo.webp" type="image/x-icon">
+  <link rel="stylesheet" href="arno.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="white-bal"></div>
+  <div class="abs1"><img src="img/abs1.webp" draggable="false"></div>
+  <div class="abs2"><img src="img/abs2.webp" draggable="false"></div>
+
+  <!-- Top progress loader (signature element) -->
+  <div id="topLoader">
+    <div id="topLoaderFill"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav>
+    <a style="cursor: default;" class="nav-brand" href="#">
+      <span class="nav-title"><img src="img/arno_logo.webp" draggable="false">arno<span></span></span>
+    </a>
+    <div class="nav-right">
+      <a style="text-decoration: none;" href="https://github.com/async-arham" target="_blank"><span class="chip">Built
+          by Arham Hussain <i class="ri-external-link-line"></i></span></a>
+    </div>
+  </nav>
+
+  <!-- Page -->
+  <main class="page">
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>Turn any document into<br><em>instant flashcards</em></h1>
+      <p>Upload your notes, textbook excerpts, or study guides. <br> arno reads them and creates 10 focused flashcards
+        in seconds.</p>
+    </div>
+
+    <!-- Upload Panel -->
+    <div class="panel" id="uploadPanel">
+      <div class="panel-header">
+        <div class="panel-icon blue"><i class="ri-file-text-line"></i></div>
+        <div>
+          <div class="panel-title">Upload study material</div>
+          <div class="panel-sub">PDF, TXT, DOCX, HTML or any readable file</div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <div class="upload-drop" id="uploadDrop">
+          <input type="file" id="fileInput" accept=".pdf,.txt,.md,.doc,.docx,.csv,.json,.html,.rtf" multiple>
+          <div class="upload-drop-icon"><i class="ri-upload-cloud-2-line"></i></div>
+          <h3>Drag and drop your files here</h3>
+          <p>or <strong>browse to upload</strong> from your device</p>
+        </div>
+
+        <div class="file-pill" id="filePill">
+          <span class="file-pill-icon"><i class="ri-file-list-3-line"></i></span>
+          <span class="file-pill-name" id="filePillName">—</span>
+          <span class="file-pill-size" id="filePillSize"></span>
+          <button class="file-pill-remove" id="filePillRemove" title="Remove file"><i
+              class="ri-close-line"></i></button>
+        </div>
+
+        <button class="btn-generate" id="genBtn" disabled>
+          <i class="ri-sparkling-2-fill"></i>
+          Generate Flashcards
+        </button>
+
+        <div class="status-row" id="statusRow">
+          <div class="mini-spinner"></div>
+          <span class="status-label" id="statusLabel">Reading your file…</span>
+          <span class="eta-label" id="etaLabel">~15s</span>
+        </div>
+
+        <div class="error-row" id="errorRow">
+          <span class="error-icon"><i class="ri-error-warning-line"></i></span>
+          <span class="error-text" id="errorText"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Flashcards Section -->
+    <div id="cardsSection" style="display:none">
+
+      <div class="divider">Flashcards</div>
+
+      <div class="cards-toolbar">
+        <span class="cards-label">Flashcards</span>
+        <span class="badge" id="cardsBadge">10 cards</span>
+      </div>
+
+      <!-- Skeleton (shown only while the first batch is generating) -->
+      <div id="skeletonCard" class="skeleton-card-single" style="display:none"></div>
+
+      <!-- Single zoomed flashcard viewer -->
+      <div class="flashcard-viewer" id="flashcardViewer" style="display:none">
+
+        <div class="fc-card" id="fcCard">
+          <div class="fc-card-inner" id="fcCardInner">
+            <div class="fc-face fc-front">
+              <div class="fc-top">
+                <span class="fc-counter" id="fcCounter">1 / 10</span>
+              </div>
+              <div class="fc-question" id="fcQuestion">Question text</div>
+              <div class="fc-hint">Tap to see answer</div>
+            </div>
+            <div class="fc-face fc-back">
+              <div class="fc-top">
+                <span class="fc-counter" id="fcCounterBack">1 / 10</span>
+                <span></span>
+              </div>
+              <div class="fc-answer" id="fcAnswer">Answer text</div>
+              <div class="fc-hint">Tap to see question</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fc-controls-wrap">
+          <div class="fc-controls">
+            <button class="fc-ctrl-btn fc-nav" id="fcPrevBtn" title="Previous"><i
+                class="ri-arrow-left-line"></i></button>
+            <button class="fc-ctrl-btn fc-wrong" id="fcWrongBtn" title="Got it wrong">
+              <i class="ri-close-line"></i><span class="fc-ctrl-count" id="fcWrongCount">0</span>
+            </button>
+            <button class="fc-ctrl-btn fc-right" id="fcRightBtn" title="Got it right">
+              <i class="ri-check-line"></i><span class="fc-ctrl-count" id="fcRightCount">0</span>
+            </button>
+            <button class="fc-ctrl-btn fc-nav" id="fcNextBtn" title="Next"><i class="ri-arrow-right-line"></i></button>
+          </div>
+          <div class="fc-toast" id="fcToast"></div>
+        </div>
+
+        <button class="btn-more" id="moreBtn">
+          <i class="ri-add-circle-line"></i>
+          Make 10 more
+        </button>
+
+      </div>
+
+      <button class="reset-link" id="resetBtn"><i class="ri-restart-line"></i> Start over with a new file</button>
+    </div>
+
+  </main>
+
+  <script>
+    // ── CONFIG ──
+    // This page calls a Vercel serverless function at /api/generate, which
+    // holds the real API key server-side — nothing secret lives in this file.
+    // Works locally with `vercel dev` and automatically once deployed.
+    const API_URL = '/api/generate';
+    const MAX_ATTEMPTS = 3; // auto-retry this many times before showing an error
+
+    // Confident copy shown while a retry is in flight, instead of the
+    // bare "Retrying (attempt X of Y)…" message. Cycled through in order
+    // so back-to-back retries don't repeat the same line.
+    const RETRY_MESSAGES = [
+      'Almost there…',
+      'Taking a little longer than usual…',
+      'Putting the final touches on your deck…'
+    ];
+
+    // ── STATE ──
+    let allCards = [];
+    let fcIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let fileContent = '';
+    let isGenerating = false;
+    let isGeneratingMore = false;
+    let etaTimer = null;
+    let toastTimer = null;
+    let advanceTimer = null;
+    let usedQuestions = []; // tracks every question asked so far, across "Make 10 more" batches
+
+    // ── ELEMENTS ──
+    const fileInput = document.getElementById('fileInput');
+    const uploadDrop = document.getElementById('uploadDrop');
+    const filePill = document.getElementById('filePill');
+    const filePillName = document.getElementById('filePillName');
+    const filePillSize = document.getElementById('filePillSize');
+    const filePillRemove = document.getElementById('filePillRemove');
+    const genBtn = document.getElementById('genBtn');
+    const statusRow = document.getElementById('statusRow');
+    const statusLabel = document.getElementById('statusLabel');
+    const etaLabel = document.getElementById('etaLabel');
+    const errorRow = document.getElementById('errorRow');
+    const errorText = document.getElementById('errorText');
+    const cardsSection = document.getElementById('cardsSection');
+    const cardsBadge = document.getElementById('cardsBadge');
+    const skeletonCard = document.getElementById('skeletonCard');
+    const flashcardViewer = document.getElementById('flashcardViewer');
+    const fcCard = document.getElementById('fcCard');
+    const fcCounter = document.getElementById('fcCounter');
+    const fcCounterBack = document.getElementById('fcCounterBack');
+    const fcQuestion = document.getElementById('fcQuestion');
+    const fcAnswer = document.getElementById('fcAnswer');
+    const fcPrevBtn = document.getElementById('fcPrevBtn');
+    const fcNextBtn = document.getElementById('fcNextBtn');
+    const fcWrongBtn = document.getElementById('fcWrongBtn');
+    const fcRightBtn = document.getElementById('fcRightBtn');
+    const fcWrongCount = document.getElementById('fcWrongCount');
+    const fcRightCount = document.getElementById('fcRightCount');
+    const fcToast = document.getElementById('fcToast');
+    const resetBtn = document.getElementById('resetBtn');
+    const moreBtn = document.getElementById('moreBtn');
+    const topLoader = document.getElementById('topLoader');
+    const topFill = document.getElementById('topLoaderFill');
+
+    // ── DRAG & DROP ──
+    uploadDrop.addEventListener('dragover', e => { e.preventDefault(); uploadDrop.classList.add('drag-over'); });
+    uploadDrop.addEventListener('dragleave', () => uploadDrop.classList.remove('drag-over'));
+    uploadDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadDrop.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFiles(fileInput.files); });
+
+    filePillRemove.addEventListener('click', () => {
+      fileContent = '';
+      fileInput.value = '';
+      filePill.classList.remove('visible');
+      genBtn.disabled = true;
+      clearError();
+    });
+
+    function fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    async function handleFiles(files) {
+      fileContent = '';
+      const names = [], sizes = [];
+      for (const file of files) {
+        names.push(file.name);
+        sizes.push(file.size);
+        const text = await readFile(file);
+        fileContent += `\n\n=== ${file.name} ===\n${text}`;
+      }
+      filePillName.textContent = names.join(', ');
+      filePillSize.textContent = fmtSize(sizes.reduce((a, b) => a + b, 0));
+      filePill.classList.add('visible');
+      genBtn.disabled = false;
+      clearError();
+    }
+
+    // Load pdf.js from CDN for real PDF text extraction
+    let pdfjsLib = null;
+    async function getPdfJs() {
+      if (pdfjsLib) return pdfjsLib;
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+      pdfjsLib = window.pdfjsLib;
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      return pdfjsLib;
+    }
+
+    async function readFile(file) {
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        try {
+          statusLabel.textContent = 'Extracting PDF text…';
+          statusRow.classList.add('visible');
+          const lib = await getPdfJs();
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+          let text = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => item.str).join(' ') + '\n';
+          }
+          statusRow.classList.remove('visible');
+          return text.trim() || '[PDF had no extractable text]';
+        } catch (err) {
+          statusRow.classList.remove('visible');
+          return `[Could not extract PDF text: ${err.message}]`;
+        }
+      }
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result || '');
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+      });
+    }
+
+    // ── GENERATE ──
+    genBtn.addEventListener('click', () => doGenerate());
+    moreBtn.addEventListener('click', () => doGenerateMore());
+
+    // Rough estimate: larger study material + the model's own variance both
+    // push real response time up. Scale the ETA shown to the user (and the
+    // timeout given to the request) with how much text we're sending.
+    function estimateTimings(contentLength) {
+      const extraChars = Math.max(0, contentLength - 3000);
+      const extraSeconds = Math.min(25, Math.floor(extraChars / 1500)); // +1s per ~1.5k chars, capped
+      const baseEta = 16 + extraSeconds;           // shown to the user
+      const baseTimeoutMs = 26000 + extraSeconds * 1000; // given to attempt 1
+      return { baseEta, baseTimeoutMs };
+    }
+
+    function buildPrompt(usedContent, excludeQuestions) {
+      const exclusionBlock = excludeQuestions.length
+        ? `\n\nThese questions have ALREADY been used — do NOT repeat them, and do NOT generate close variations or rephrasings of them. Every new question must cover a genuinely different fact, idea, or angle from the material:\n${excludeQuestions.map(q => `- ${q}`).join('\n')}`
+        : '';
+
+      return `You are an expert academic tutor. Analyze the study material below and generate exactly 10 flashcard question-and-answer pairs.
+
+Requirements:
+- Questions: ONE short sentence, under 12 words.
+- Answers: ONE short sentence, under 18 words (max 2 short sentences only if truly necessary).
+- Be extremely concise — no filler, no extra explanation.
+- Vary question types: definitions, cause-effect, compare-contrast, application.
+- Output ONLY the JSON array below. Do not include any introduction, comment, heading, or text before or after it. Do not wrap it in markdown or code fences.
+- Exact format, all 10 items, nothing else: [{"q":"Question?","a":"Answer."},...]${exclusionBlock}
+
+STUDY MATERIAL:
+${usedContent}`;
+    }
+
+    async function doGenerate() {
+      if (isGenerating) return;
+      isGenerating = true;
+      clearError();
+
+      const usedContent = fileContent.slice(0, 9000);
+      const { baseEta, baseTimeoutMs } = estimateTimings(usedContent.length);
+      setLoading(true, baseEta);
+
+      const prompt = buildPrompt(usedContent, []);
+
+      const result = await runGeneration(prompt, baseTimeoutMs);
+
+      if (result.cards) {
+        allCards = result.cards;
+        usedQuestions = result.cards.map(c => c.q);
+        fcIndex = 0;
+        correctCount = 0;
+        wrongCount = 0;
+
+        setProgress(100);
+        setTimeout(() => {
+          setLoading(false);
+          renderDeck();
+        }, 350);
+      } else {
+        setLoading(false);
+        showError(`${result.errorMsg} The free model may be overloaded right now — please try again in a moment.`);
+      }
+
+      isGenerating = false;
+      genBtn.disabled = false;
+      stopETA();
+    }
+
+    async function doGenerateMore() {
+      if (isGeneratingMore || isGenerating) return;
+      isGeneratingMore = true;
+      moreBtn.disabled = true;
+      const originalMoreLabel = moreBtn.innerHTML;
+      moreBtn.innerHTML = '<i class="ri-loader-4-line"></i> Generating 10 new cards…';
+      clearError();
+
+      const usedContent = fileContent.slice(0, 9000);
+      const { baseEta, baseTimeoutMs } = estimateTimings(usedContent.length);
+      setLoading(true, baseEta);
+      // Keep showing the existing deck behind the loading state rather than
+      // swapping to the empty skeleton, since cards are still there to browse.
+      skeletonCard.style.display = 'none';
+      flashcardViewer.style.display = 'flex';
+
+      const prompt = buildPrompt(usedContent, usedQuestions);
+      const result = await runGeneration(prompt, baseTimeoutMs);
+
+      if (result.cards) {
+        // Drop any accidental repeats of questions we've already used,
+        // just in case the model slips one in despite the instructions.
+        const usedLower = new Set(usedQuestions.map(q => q.trim().toLowerCase()));
+        const fresh = result.cards.filter(c => !usedLower.has(c.q.trim().toLowerCase()));
+
+        if (fresh.length) {
+          const insertAt = allCards.length;
+          allCards = allCards.concat(fresh);
+          usedQuestions = usedQuestions.concat(fresh.map(c => c.q));
+          cardsBadge.textContent = `${allCards.length} card${allCards.length !== 1 ? 's' : ''}`;
+          fcIndex = insertAt; // jump straight to the first new card
+          renderCard();
+          showToast(`${fresh.length} new card${fresh.length !== 1 ? 's' : ''} added`);
+        } else {
+          showToast("Couldn't find new material to ask about");
+        }
+        setProgress(100);
+        setTimeout(() => setLoading(false), 350);
+      } else {
+        setLoading(false);
+        showError(`${result.errorMsg} The free model may be overloaded right now — please try again in a moment.`);
+      }
+
+      flashcardViewer.style.display = 'flex';
+      isGeneratingMore = false;
+      moreBtn.disabled = false;
+      moreBtn.innerHTML = originalMoreLabel;
+      stopETA();
+    }
+
+    // Shared retry/timeout/parse loop used by both the initial generation
+    // and "Make 10 more". Returns { cards } on success or { errorMsg } on
+    // exhausted retries.
+    async function runGeneration(prompt, baseTimeoutMs) {
+      let lastErrorMsg = '';
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        // Each retry gets a longer timeout, since a slow/overloaded free
+        // model is the most likely cause of a failed first attempt.
+        const timeoutMs = baseTimeoutMs + (attempt - 1) * 12000;
+        if (attempt > 1) {
+          statusLabel.textContent = RETRY_MESSAGES[(attempt - 2) % RETRY_MESSAGES.length];
+          bumpEta(Math.ceil(timeoutMs / 1000));
+        }
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: 1500,
+              temperature: 0.5,
+              timeout_ms: timeoutMs - 2000 // leave headroom for the function to respond after its own fetch
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          setProgress(80);
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `API returned ${res.status}`);
+          }
+
+          const data = await res.json();
+          if (data?.error) throw new Error(data.error.message || 'The AI provider returned an error.');
+
+          const raw = data?.choices?.[0]?.message?.content || '';
+          const cards = parseCards(raw);
+
+          if (cards.length >= 5) {
+            return { cards };
+          }
+
+          lastErrorMsg = `Only got ${cards.length} usable card${cards.length === 1 ? '' : 's'} back.`;
+          // fall through to retry loop
+
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            lastErrorMsg = 'The request timed out.';
+          } else if (err.message === 'Failed to fetch') {
+            lastErrorMsg = 'Could not reach the server.';
+          } else {
+            lastErrorMsg = err.message || 'Something went wrong.';
+          }
+        }
+        // loop continues to next attempt unless this was the last one
+      }
+
+      return { errorMsg: lastErrorMsg };
+    }
+
+    function parseCards(text) {
+      let clean = text
+        .replace(/```json|```/gi, '')
+        .replace(/[\u2018\u2019]/g, "'")   // smart single quotes → straight
+        .replace(/[\u201C\u201D]/g, '"')   // smart double quotes → straight
+        .trim();
+
+      // First attempt: parse the JSON array directly.
+      const s = clean.indexOf('['), e = clean.lastIndexOf(']');
+      if (s !== -1 && e !== -1 && e > s) {
+        let slice = clean.slice(s, e + 1);
+        // Trailing commas before a closing bracket break JSON.parse — strip them.
+        slice = slice.replace(/,(\s*[\]}])/g, '$1');
+        try {
+          const arr = JSON.parse(slice);
+          if (Array.isArray(arr)) {
+            const valid = arr.filter(c => c && typeof c.q === 'string' && typeof c.a === 'string' && c.q.trim() && c.a.trim());
+            if (valid.length) return valid.slice(0, 10);
+          }
+        } catch (_) {
+          // fall through to the recovery parser below — this handles
+          // truncated/malformed JSON (e.g. output cut off mid-array)
+        }
+      }
+
+      // Recovery parser: pull out individual {"q":"...","a":"..."} objects
+      // one at a time, so a single broken/truncated entry doesn't sink the
+      // whole batch. Tolerates single- or double-quoted keys/values.
+      const objRegex = /\{\s*["']q["']\s*:\s*["']((?:[^"'\\]|\\.)*)["']\s*,\s*["']a["']\s*:\s*["']((?:[^"'\\]|\\.)*)["']\s*\}/g;
+      const found = [];
+      let match;
+      while ((match = objRegex.exec(clean)) !== null) {
+        const q = match[1].replace(/\\(.)/g, '$1').trim();
+        const a = match[2].replace(/\\(.)/g, '$1').trim();
+        if (q && a) found.push({ q, a });
+      }
+      if (found.length) return found.slice(0, 10);
+
+      throw new Error('Could not find valid flashcards in the AI response.');
+    }
+
+    // ── DECK RENDER ──
+    function renderDeck() {
+      cardsSection.style.display = 'block';
+      skeletonCard.style.display = 'none';
+      flashcardViewer.style.display = 'flex';
+      cardsBadge.textContent = `${allCards.length} card${allCards.length !== 1 ? 's' : ''}`;
+      renderCard();
+    }
+
+    function renderCard() {
+      const card = allCards[fcIndex];
+      if (!card) return;
+      fcCard.classList.remove('flipped');
+      fcQuestion.textContent = card.q;
+      fcAnswer.textContent = card.a;
+      const label = `${fcIndex + 1} / ${allCards.length}`;
+      fcCounter.textContent = label;
+      fcCounterBack.textContent = label;
+      fcPrevBtn.disabled = fcIndex === 0;
+      fcNextBtn.disabled = fcIndex >= allCards.length - 1;
+    }
+
+    fcCard.addEventListener('click', () => fcCard.classList.toggle('flipped'));
+
+    fcPrevBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (fcIndex > 0) { fcIndex--; renderCard(); }
+    });
+    fcNextBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (fcIndex < allCards.length - 1) { fcIndex++; renderCard(); }
+    });
+
+    fcRightBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (fcRightBtn.disabled) return;
+      lockAnswerButtons();
+      correctCount++;
+      fcRightCount.textContent = correctCount;
+      spawnConfetti(fcRightBtn);
+      advanceAfterAnswer();
+    });
+
+    fcWrongBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (fcWrongBtn.disabled) return;
+      lockAnswerButtons();
+      wrongCount++;
+      fcWrongCount.textContent = wrongCount;
+      showToast("You'll get it next time");
+      advanceAfterAnswer();
+    });
+
+    function lockAnswerButtons() {
+      fcRightBtn.disabled = true;
+      fcWrongBtn.disabled = true;
+      fcPrevBtn.disabled = true;
+      fcNextBtn.disabled = true;
+    }
+
+    function advanceAfterAnswer() {
+      clearTimeout(advanceTimer);
+      advanceTimer = setTimeout(() => {
+        if (fcIndex < allCards.length - 1) {
+          fcIndex++;
+          // Flip back to the question side first; swap the text only once
+          // we're past the halfway point of the flip, when the face that's
+          // changing is turned away from the viewer. This avoids briefly
+          // showing the next card's answer before its question.
+          fcCard.classList.remove('flipped');
+          setTimeout(() => {
+            renderCard();
+            unlockAnswerButtons();
+          }, 260); // ~half of the 0.5s flip transition
+        } else {
+          // Last card — nothing to advance to, just unlock.
+          unlockAnswerButtons();
+        }
+      }, 800);
+    }
+
+    function unlockAnswerButtons() {
+      fcRightBtn.disabled = false;
+      fcWrongBtn.disabled = false;
+      fcPrevBtn.disabled = fcIndex === 0;
+      fcNextBtn.disabled = fcIndex >= allCards.length - 1;
+    }
+
+    function showToast(msg) {
+      fcToast.textContent = msg;
+      fcToast.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => fcToast.classList.remove('visible'), 1500);
+    }
+
+    function spawnConfetti(originEl) {
+      const rect = originEl.getBoundingClientRect();
+      const originX = rect.left + rect.width / 2;
+      const originY = rect.top + rect.height / 2;
+      const colors = ['#5b8def', '#34d399', '#fbbc04', '#f76f6f', '#a78bfa'];
+      const pieceCount = 18;
+
+      for (let i = 0; i < pieceCount; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 60 + Math.random() * 90;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance - 30;
+        const rot = (Math.random() * 360 - 180) + 'deg';
+        piece.style.left = originX + 'px';
+        piece.style.top = originY + 'px';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.setProperty('--dx', dx + 'px');
+        piece.style.setProperty('--dy', dy + 'px');
+        piece.style.setProperty('--rot', rot);
+        if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 950);
+      }
+    }
+
+    // ── RESET ──
+    resetBtn.addEventListener('click', () => {
+      allCards = []; fcIndex = 0; correctCount = 0; wrongCount = 0; fileContent = ''; usedQuestions = [];
+      fileInput.value = '';
+      filePill.classList.remove('visible');
+      cardsSection.style.display = 'none';
+      flashcardViewer.style.display = 'none';
+      genBtn.disabled = true;
+      clearError();
+      topLoader.classList.remove('active');
+      topFill.style.width = '0%';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ── LOADING STATE ──
+    let etaSeconds = 0;
+
+    function setLoading(on, initialEta) {
+      if (on) {
+        genBtn.disabled = true;
+        statusRow.classList.add('visible');
+        statusLabel.textContent = 'Analyzing your material…';
+        topLoader.classList.add('active');
+        setProgress(10);
+        etaSeconds = initialEta || 18;
+        etaLabel.textContent = `~${etaSeconds}s`;
+        stopETA();
+        etaTimer = setInterval(() => {
+          etaSeconds = Math.max(1, etaSeconds - 1);
+          etaLabel.textContent = `~${etaSeconds}s`;
+        }, 1000);
+        cardsSection.style.display = 'block';
+        if (allCards.length === 0) {
+          skeletonCard.style.display = 'block';
+          flashcardViewer.style.display = 'none';
+        }
+      } else {
+        genBtn.disabled = false;
+        statusRow.classList.remove('visible');
+        topLoader.classList.remove('active');
+        topFill.style.width = '0%';
+        stopETA();
+      }
+    }
+
+    // Called when a retry kicks in with a longer timeout — gives the
+    // countdown more time instead of sitting at "1s" while still working.
+    function bumpEta(seconds) {
+      etaSeconds = Math.max(etaSeconds, seconds);
+      etaLabel.textContent = `~${etaSeconds}s`;
+    }
+
+    function setProgress(pct) {
+      topFill.style.width = pct + '%';
+    }
+
+    function stopETA() {
+      if (etaTimer) { clearInterval(etaTimer); etaTimer = null; }
+    }
+
+    // ── ERROR ──
+    function showError(msg) {
+      errorRow.classList.add('visible');
+      errorText.textContent = msg;
+    }
+    function clearError() {
+      errorRow.classList.remove('visible');
+      errorText.textContent = '';
+    }
+  </script>
+</body>
+
+</html>
