@@ -895,6 +895,11 @@ nav {
         bottom: 2%;
     }
 
+    .abs1 img,
+    .abs2 img {
+        z-index: -1;
+    }
+
     .hero p {
         font-size: 0.9rem;
     }
