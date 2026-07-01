@@ -20,12 +20,10 @@
   <div class="abs1"><img src="img/abs1.webp" draggable="false"></div>
   <div class="abs2"><img src="img/abs2.webp" draggable="false"></div>
 
-  <!-- Top progress loader (signature element) -->
   <div id="topLoader">
     <div id="topLoaderFill"></div>
   </div>
 
-  <!-- Nav -->
   <nav>
     <a style="cursor: default;" class="nav-brand" href="#">
       <span class="nav-title"><img src="img/arno_logo.webp" draggable="false">arno<span></span></span>
@@ -36,17 +34,13 @@
     </div>
   </nav>
 
-  <!-- Page -->
   <main class="page">
 
-    <!-- Hero -->
     <div class="hero">
       <h1>Turn any document into<br><em>instant flashcards</em></h1>
-      <p>Upload your notes, textbook excerpts, or study guides. <br> arno reads them and creates 10 focused flashcards
-        in seconds.</p>
+      <p>Drop in any document and arno thinks it through <br>give it up to a <span class="underlined-word">minute</span> to craft 10 focused, meaningful flashcards.</p>
     </div>
 
-    <!-- Upload Panel -->
     <div class="panel" id="uploadPanel">
       <div class="panel-header">
         <div class="panel-icon blue"><i class="ri-file-text-line"></i></div>
@@ -91,7 +85,6 @@
       </div>
     </div>
 
-    <!-- Flashcards Section -->
     <div id="cardsSection" style="display:none">
 
       <div class="divider">Flashcards</div>
@@ -101,10 +94,8 @@
         <span class="badge" id="cardsBadge">10 cards</span>
       </div>
 
-      <!-- Skeleton (shown only while the first batch is generating) -->
       <div id="skeletonCard" class="skeleton-card-single" style="display:none"></div>
 
-      <!-- Single zoomed flashcard viewer -->
       <div class="flashcard-viewer" id="flashcardViewer" style="display:none">
 
         <div class="fc-card" id="fcCard">
@@ -156,15 +147,9 @@
 
   <script>
     // ── CONFIG ──
-    // This page calls a Vercel serverless function at /api/generate, which
-    // holds the real API key server-side — nothing secret lives in this file.
-    // Works locally with `vercel dev` and automatically once deployed.
     const API_URL = '/api/generate';
-    const MAX_ATTEMPTS = 3; // auto-retry this many times before showing an error
+    const MAX_ATTEMPTS = 3;
 
-    // Confident copy shown while a retry is in flight, instead of the
-    // bare "Retrying (attempt X of Y)…" message. Cycled through in order
-    // so back-to-back retries don't repeat the same line.
     const RETRY_MESSAGES = [
       'Almost there…',
       'Taking a little longer than usual…',
@@ -182,7 +167,7 @@
     let etaTimer = null;
     let toastTimer = null;
     let advanceTimer = null;
-    let usedQuestions = []; // tracks every question asked so far, across "Make 10 more" batches
+    let usedQuestions = [];
 
     // ── ELEMENTS ──
     const fileInput = document.getElementById('fileInput');
@@ -258,7 +243,6 @@
       clearError();
     }
 
-    // Load pdf.js from CDN for real PDF text extraction
     let pdfjsLib = null;
     async function getPdfJs() {
       if (pdfjsLib) return pdfjsLib;
@@ -307,14 +291,11 @@
     genBtn.addEventListener('click', () => doGenerate());
     moreBtn.addEventListener('click', () => doGenerateMore());
 
-    // Rough estimate: larger study material + the model's own variance both
-    // push real response time up. Scale the ETA shown to the user (and the
-    // timeout given to the request) with how much text we're sending.
     function estimateTimings(contentLength) {
       const extraChars = Math.max(0, contentLength - 3000);
-      const extraSeconds = Math.min(25, Math.floor(extraChars / 1500)); // +1s per ~1.5k chars, capped
-      const baseEta = 16 + extraSeconds;           // shown to the user
-      const baseTimeoutMs = 26000 + extraSeconds * 1000; // given to attempt 1
+      const extraSeconds = Math.min(25, Math.floor(extraChars / 1500));
+      const baseEta = 16 + extraSeconds;
+      const baseTimeoutMs = 26000 + extraSeconds * 1000;
       return { baseEta, baseTimeoutMs };
     }
 
@@ -364,12 +345,44 @@ ${usedContent}`;
         }, 350);
       } else {
         setLoading(false);
-        showError(`${result.errorMsg} The free model may be overloaded right now — please try again in a moment.`);
+        showError(friendlyErrorMessage(result.errorMsg));
       }
 
       isGenerating = false;
       genBtn.disabled = false;
       stopETA();
+    }
+
+    // Turns raw provider errors into something a student can act on.
+    // Specifically detects OpenRouter's daily free-tier cap, since that
+    // error is common, predictable, and has a known reset time.
+    function friendlyErrorMessage(rawMsg) {
+      const msg = (rawMsg || '').toLowerCase();
+      const isDailyLimit = msg.includes('rate limit') && msg.includes('free-models-per-day');
+      const isGenericRateLimit = msg.includes('rate limit') || msg.includes('429');
+
+      if (isDailyLimit || isGenericRateLimit) {
+        const resetTime = nextUtcMidnightLocal();
+        return `Daily free-tier limit reached for this AI model. It resets at midnight UTC — that's ${resetTime} your local time. Try again after that, or ask whoever set this up to add OpenRouter credits to raise the limit.`;
+      }
+
+      return `${rawMsg} The free model may be overloaded right now — please try again in a moment.`;
+    }
+
+    // Computes the next UTC midnight and formats it in the visitor's local
+    // time zone, so "resets at midnight UTC" is something they can actually
+    // act on without doing the conversion themselves.
+    function nextUtcMidnightLocal() {
+      const now = new Date();
+      const next = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0, 0, 0
+      ));
+      return next.toLocaleString(undefined, {
+        weekday: 'short', hour: 'numeric', minute: '2-digit'
+      });
     }
 
     async function doGenerateMore() {
@@ -383,8 +396,6 @@ ${usedContent}`;
       const usedContent = fileContent.slice(0, 9000);
       const { baseEta, baseTimeoutMs } = estimateTimings(usedContent.length);
       setLoading(true, baseEta);
-      // Keep showing the existing deck behind the loading state rather than
-      // swapping to the empty skeleton, since cards are still there to browse.
       skeletonCard.style.display = 'none';
       flashcardViewer.style.display = 'flex';
 
@@ -392,8 +403,6 @@ ${usedContent}`;
       const result = await runGeneration(prompt, baseTimeoutMs);
 
       if (result.cards) {
-        // Drop any accidental repeats of questions we've already used,
-        // just in case the model slips one in despite the instructions.
         const usedLower = new Set(usedQuestions.map(q => q.trim().toLowerCase()));
         const fresh = result.cards.filter(c => !usedLower.has(c.q.trim().toLowerCase()));
 
@@ -402,7 +411,7 @@ ${usedContent}`;
           allCards = allCards.concat(fresh);
           usedQuestions = usedQuestions.concat(fresh.map(c => c.q));
           cardsBadge.textContent = `${allCards.length} card${allCards.length !== 1 ? 's' : ''}`;
-          fcIndex = insertAt; // jump straight to the first new card
+          fcIndex = insertAt;
           renderCard();
           showToast(`${fresh.length} new card${fresh.length !== 1 ? 's' : ''} added`);
         } else {
@@ -412,7 +421,7 @@ ${usedContent}`;
         setTimeout(() => setLoading(false), 350);
       } else {
         setLoading(false);
-        showError(`${result.errorMsg} The free model may be overloaded right now — please try again in a moment.`);
+        showError(friendlyErrorMessage(result.errorMsg));
       }
 
       flashcardViewer.style.display = 'flex';
@@ -422,15 +431,10 @@ ${usedContent}`;
       stopETA();
     }
 
-    // Shared retry/timeout/parse loop used by both the initial generation
-    // and "Make 10 more". Returns { cards } on success or { errorMsg } on
-    // exhausted retries.
     async function runGeneration(prompt, baseTimeoutMs) {
       let lastErrorMsg = '';
 
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        // Each retry gets a longer timeout, since a slow/overloaded free
-        // model is the most likely cause of a failed first attempt.
         const timeoutMs = baseTimeoutMs + (attempt - 1) * 12000;
         if (attempt > 1) {
           statusLabel.textContent = RETRY_MESSAGES[(attempt - 2) % RETRY_MESSAGES.length];
@@ -448,7 +452,7 @@ ${usedContent}`;
               messages: [{ role: 'user', content: prompt }],
               max_tokens: 1500,
               temperature: 0.5,
-              timeout_ms: timeoutMs - 2000 // leave headroom for the function to respond after its own fetch
+              timeout_ms: timeoutMs - 2000
             }),
             signal: controller.signal
           });
@@ -472,18 +476,16 @@ ${usedContent}`;
           }
 
           lastErrorMsg = `Only got ${cards.length} usable card${cards.length === 1 ? '' : 's'} back.`;
-          // fall through to retry loop
 
         } catch (err) {
           if (err.name === 'AbortError') {
-            lastErrorMsg = 'The request timed out.';
+            lastErrorMsg = 'TIMEOUT';
           } else if (err.message === 'Failed to fetch') {
-            lastErrorMsg = 'Could not reach the server.';
+            lastErrorMsg = 'NETWORK';
           } else {
             lastErrorMsg = err.message || 'Something went wrong.';
           }
         }
-        // loop continues to next attempt unless this was the last one
       }
 
       return { errorMsg: lastErrorMsg };
@@ -492,15 +494,13 @@ ${usedContent}`;
     function parseCards(text) {
       let clean = text
         .replace(/```json|```/gi, '')
-        .replace(/[\u2018\u2019]/g, "'")   // smart single quotes → straight
-        .replace(/[\u201C\u201D]/g, '"')   // smart double quotes → straight
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
         .trim();
 
-      // First attempt: parse the JSON array directly.
       const s = clean.indexOf('['), e = clean.lastIndexOf(']');
       if (s !== -1 && e !== -1 && e > s) {
         let slice = clean.slice(s, e + 1);
-        // Trailing commas before a closing bracket break JSON.parse — strip them.
         slice = slice.replace(/,(\s*[\]}])/g, '$1');
         try {
           const arr = JSON.parse(slice);
@@ -509,14 +509,10 @@ ${usedContent}`;
             if (valid.length) return valid.slice(0, 10);
           }
         } catch (_) {
-          // fall through to the recovery parser below — this handles
-          // truncated/malformed JSON (e.g. output cut off mid-array)
+          // fall through
         }
       }
 
-      // Recovery parser: pull out individual {"q":"...","a":"..."} objects
-      // one at a time, so a single broken/truncated entry doesn't sink the
-      // whole batch. Tolerates single- or double-quoted keys/values.
       const objRegex = /\{\s*["']q["']\s*:\s*["']((?:[^"'\\]|\\.)*)["']\s*,\s*["']a["']\s*:\s*["']((?:[^"'\\]|\\.)*)["']\s*\}/g;
       const found = [];
       let match;
@@ -527,7 +523,7 @@ ${usedContent}`;
       }
       if (found.length) return found.slice(0, 10);
 
-      throw new Error('Could not find valid flashcards in the AI response.');
+      throw new Error('PARSE_ERROR');
     }
 
     // ── DECK RENDER ──
@@ -595,17 +591,12 @@ ${usedContent}`;
       advanceTimer = setTimeout(() => {
         if (fcIndex < allCards.length - 1) {
           fcIndex++;
-          // Flip back to the question side first; swap the text only once
-          // we're past the halfway point of the flip, when the face that's
-          // changing is turned away from the viewer. This avoids briefly
-          // showing the next card's answer before its question.
           fcCard.classList.remove('flipped');
           setTimeout(() => {
             renderCard();
             unlockAnswerButtons();
-          }, 260); // ~half of the 0.5s flip transition
+          }, 260);
         } else {
-          // Last card — nothing to advance to, just unlock.
           unlockAnswerButtons();
         }
       }, 800);
@@ -697,8 +688,6 @@ ${usedContent}`;
       }
     }
 
-    // Called when a retry kicks in with a longer timeout — gives the
-    // countdown more time instead of sitting at "1s" while still working.
     function bumpEta(seconds) {
       etaSeconds = Math.max(etaSeconds, seconds);
       etaLabel.textContent = `~${etaSeconds}s`;
@@ -710,6 +699,45 @@ ${usedContent}`;
 
     function stopETA() {
       if (etaTimer) { clearInterval(etaTimer); etaTimer = null; }
+    }
+
+
+    // ── FRIENDLY ERRORS ──
+    function friendlyErrorMessage(raw) {
+      const m = (raw || '').toLowerCase();
+
+      if (m.includes('free-models-per-day') || (m.includes('rate limit') && m.includes('per-day'))) {
+        return `Daily limit reached for this model. Try again after ${nextUtcMidnightLocal()} (midnight UTC).`;
+      }
+      if (m.includes('rate limit') || m === '429' || m.includes('429')) {
+        return 'Too many requests right now. Wait a moment and try again.';
+      }
+      if (raw === 'TIMEOUT') {
+        return 'Took too long to respond. The model may be busy — try again in a moment.';
+      }
+      if (raw === 'NETWORK') {
+        return 'Could not reach the server. Check your internet connection and try again.';
+      }
+      if (raw === 'PARSE_ERROR') {
+        return 'Got an unexpected response from the AI. Try again — it usually works on the next attempt.';
+      }
+      if (m.includes('only got') && m.includes('back')) {
+        return 'Got fewer cards than expected. Hit Generate again to retry.';
+      }
+      if (m.includes('unauthorized') || m.includes('401') || m.includes('invalid api')) {
+        return 'API key rejected. Ask whoever set this up to check the key.';
+      }
+      if (m.includes('context') || m.includes('token') || m.includes('too large')) {
+        return 'Your file is too large for one go. Try a shorter excerpt.';
+      }
+      // generic fallback — still friendly, no raw text
+      return 'Something went wrong. Please try again in a moment.';
+    }
+
+    function nextUtcMidnightLocal() {
+      const now = new Date();
+      const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+      return next.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     }
 
     // ── ERROR ──
