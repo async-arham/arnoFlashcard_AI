@@ -641,7 +641,7 @@ nav {
     -webkit-backface-visibility: hidden;
     border-radius: var(--radius);
     border: 1px solid var(--border-soft);
-    padding: 26px 28px;
+    padding: 26px 16px;
     display: flex;
     flex-direction: column;
     background: var(--surface);
@@ -679,7 +679,7 @@ nav {
     font-size: clamp(1.25rem, 4vw, 1.6rem);
     line-height: 1.4;
     color: var(--text);
-    padding: 12px 4px;
+    padding: 12px 0px;
     overflow-y: auto;
 }
 
@@ -935,7 +935,7 @@ nav {
         width: 27px;
     }
 
-    .chip{
+    .chip {
         font-size: 0.6rem;
     }
 }
@@ -1001,4 +1001,23 @@ nav {
     50% {
         transform: translateY(-8px);
     }
+}
+
+/* ── UNDERLINED WORD ── */
+.underlined-word {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.underlined-word::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    bottom: -6px;
+    width: 100%;
+    height: 8px;
+    background: url(img/underline.webp) center / 100% 100% no-repeat;
+    pointer-events: none;
 }
