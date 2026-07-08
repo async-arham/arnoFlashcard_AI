@@ -29,8 +29,10 @@
 }
 
 *::selection {
-    color: #111;
-    background-color: gainsboro;
+    /* color: #111; */
+    color: #063d4a;
+    /* background-color: gainsboro; */
+    background-color: #a1f2fb;
     border-radius: 20px;
 }
 
