@@ -309,27 +309,35 @@
       return { baseEta, baseTimeoutMs };
     }
 
-    function buildPrompt(usedContent, excludeQuestions) {
+    const SYSTEM_PROMPT = `You are a precise flashcard-generation engine used inside a study app. You convert study material into flashcards. Follow every rule below with zero exceptions — these rules outrank any instinct to shorten, summarize, or "clean up" the text.
+
+RULE 1 — SOURCE OF TRUTH
+Use ONLY facts, statements, or data explicitly written in the STUDY MATERIAL the user gives you. Never add outside knowledge, general trivia, or anything you personally know about the topic — not even one word of it. If the material lacks enough distinct facts for the requested count, output fewer flashcards instead of inventing or importing anything.
+
+RULE 2 — NEVER TRUNCATE OR MUTILATE DATA (most important rule)
+Never cut off, shorten, abbreviate, or partially reproduce any atomic piece of data. This includes but is not limited to: email addresses, URLs/links, phone numbers, dates, times, prices, IDs, codes, usernames, file names, and proper names.
+- An atomic token must ALWAYS appear complete and exact, character-for-character as written in the material — e.g. "j.smith@example.com" must never become "j.smith@exa..." or "j.smith@example" or be paraphrased.
+- Never guess, complete, or "fix" a token that looks incomplete in the source — reproduce it exactly as given, even if it looks unusual.
+- If including a full token would make a sentence longer than the usual length guideline, INCLUDE THE FULL TOKEN ANYWAY. Length guidelines are soft and apply to ordinary prose; they never justify cutting a token.
+
+RULE 3 — LENGTH (soft target, subordinate to Rule 2)
+Aim for one clear sentence per question (roughly under 12 words) and one clear sentence per answer (roughly under 18 words, two short sentences only if truly necessary). These are style targets, not hard limits — if a required fact (per Rule 2) needs more room, use it. Never omit or truncate the fact just to hit a word count.
+
+RULE 4 — NO FABRICATION
+Do not add context, examples, elaboration, or "helpful" clarifications that are not stated in the material, even if they would make the answer clearer or more complete.
+
+RULE 5 — OUTPUT FORMAT (strict)
+Respond with ONLY a raw JSON array, nothing else — no preamble, no comments, no markdown, no code fences, no trailing text before or after it.
+Exact shape: [{"q":"Question?","a":"Answer."}, ...]
+Every "q" and "a" value must be valid JSON-escaped text.`;
+
+    function buildPrompt(usedContent, excludeQuestions, count) {
       const exclusionBlock = excludeQuestions.length
-        ? `\n\nThese questions have ALREADY been used — do NOT repeat them, and do NOT generate close variations or rephrasings of them. Every new question must cover a genuinely different fact, idea, or angle from the material:\n${excludeQuestions.map(q => `- ${q}`).join('\n')}`
+        ? `\n\nThese questions were already used in this session — do not repeat them or produce close rephrasings. Every new question must cover a genuinely different fact from the material:\n${excludeQuestions.map(q => `- ${q}`).join('\n')}`
         : '';
 
-      return `You are an expert academic tutor. Analyze ONLY the study material below and generate exactly 10 flashcard question-and-answer pairs.
+      return `Generate exactly ${count} flashcard question-and-answer pairs from the study material below. Vary the question types (definitions, cause-effect, compare-contrast, application) only where the material itself supports that angle.${exclusionBlock}
 
-STRICT SOURCE RULE — this overrides everything else:
-- Every question and every answer must be derived 100% from facts, statements, or data explicitly present in the STUDY MATERIAL below.
-- Do NOT use outside knowledge, general trivia, textbook facts, or anything you know about the topic that is not written in the material — not even a single word of it, not even for definitions that seem "common knowledge."
-- If the material does not contain enough distinct facts to support a card, write a card about a different fact that IS in the material instead — never fill the gap with outside information.
-- If you genuinely cannot find 10 supportable facts in the material, output fewer than 10 items rather than inventing or importing outside content.
-- Do not add context, examples, or elaboration that isn't stated in the material, even if it would make the answer clearer.
-
-Other requirements:
-- Questions: ONE short sentence, under 12 words.
-- Answers: ONE short sentence, under 18 words (max 2 short sentences only if truly necessary).
-- Be extremely concise — no filler, no extra explanation.
-- Vary question types: definitions, cause-effect, compare-contrast, application — but ONLY where the material itself supports that angle.
-- Output ONLY the JSON array below. Do not include any introduction, comment, heading, or text before or after it. Do not wrap it in markdown or code fences.
-- Exact format, nothing else: [{"q":"Question?","a":"Answer."},...]${exclusionBlock}
 
 STUDY MATERIAL (the ONLY source you may use):
 ${usedContent}`;
@@ -344,7 +352,7 @@ ${usedContent}`;
       const { baseEta, baseTimeoutMs } = estimateTimings(usedContent.length);
       setLoading(true, baseEta);
 
-      const prompt = buildPrompt(usedContent, []);
+      const prompt = buildPrompt(usedContent, [], 10);
 
       const result = await runGeneration(prompt, baseTimeoutMs);
 
@@ -416,7 +424,7 @@ ${usedContent}`;
       skeletonCard.style.display = 'none';
       flashcardViewer.style.display = 'flex';
 
-      const prompt = buildPrompt(usedContent, usedQuestions);
+      const prompt = buildPrompt(usedContent, usedQuestions, 10);
       const result = await runGeneration(prompt, baseTimeoutMs);
 
       if (result.cards) {
@@ -466,7 +474,10 @@ ${usedContent}`;
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              messages: [{ role: 'user', content: prompt }],
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: prompt }
+              ],
               max_tokens: 1500,
               temperature: 0.5,
               timeout_ms: timeoutMs - 2000
@@ -563,6 +574,23 @@ ${usedContent}`;
       fcCounterBack.textContent = label;
       fcPrevBtn.disabled = fcIndex === 0;
       fcNextBtn.disabled = fcIndex >= allCards.length - 1;
+      markScrollableIfOverflowing(fcQuestion);
+      markScrollableIfOverflowing(fcAnswer);
+    }
+
+    // Long content (e.g. a full email address, a long fact) can exceed the
+    // fixed-height card. Rather than let it get clipped, we detect overflow
+    // and let the card scroll internally — top-aligned so you start reading
+    // from the beginning of the text, not the vertical middle of it.
+    function markScrollableIfOverflowing(el) {
+      el.classList.remove('is-scrollable');
+      // Measure after the browser has laid out the new text.
+      requestAnimationFrame(() => {
+        if (el.scrollHeight > el.clientHeight + 1) {
+          el.classList.add('is-scrollable');
+        }
+        el.scrollTop = 0;
+      });
     }
 
     fcCard.addEventListener('click', () => fcCard.classList.toggle('flipped'));
