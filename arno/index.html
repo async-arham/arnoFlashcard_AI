@@ -144,6 +144,11 @@
 
       </div>
 
+      <button class="btn-more" id="moreBtn">
+        <i class="ri-add-line"></i>
+        Generate 10 more cards
+      </button>
+
       <button class="reset-link" id="resetBtn"><i class="ri-restart-line"></i> Start over with a new file</button>
     </div>
 
@@ -172,6 +177,7 @@
     let toastTimer = null;
     let advanceTimer = null;
     let usedQuestions = [];
+    let etaSeconds = 0;
 
     // ── ELEMENTS ──
     const fileInput = document.getElementById('fileInput');
@@ -662,8 +668,6 @@ ${usedContent}`;
     });
 
     // ── LOADING STATE ──
-    let etaSeconds = 0;
-
     function setLoading(on, initialEta) {
       if (on) {
         genBtn.disabled = true;
