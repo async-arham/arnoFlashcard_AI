@@ -314,17 +314,24 @@
         ? `\n\nThese questions have ALREADY been used — do NOT repeat them, and do NOT generate close variations or rephrasings of them. Every new question must cover a genuinely different fact, idea, or angle from the material:\n${excludeQuestions.map(q => `- ${q}`).join('\n')}`
         : '';
 
-      return `You are an expert academic tutor. Analyze the study material below and generate exactly 10 flashcard question-and-answer pairs.
+      return `You are an expert academic tutor. Analyze ONLY the study material below and generate exactly 10 flashcard question-and-answer pairs.
 
-Requirements:
+STRICT SOURCE RULE — this overrides everything else:
+- Every question and every answer must be derived 100% from facts, statements, or data explicitly present in the STUDY MATERIAL below.
+- Do NOT use outside knowledge, general trivia, textbook facts, or anything you know about the topic that is not written in the material — not even a single word of it, not even for definitions that seem "common knowledge."
+- If the material does not contain enough distinct facts to support a card, write a card about a different fact that IS in the material instead — never fill the gap with outside information.
+- If you genuinely cannot find 10 supportable facts in the material, output fewer than 10 items rather than inventing or importing outside content.
+- Do not add context, examples, or elaboration that isn't stated in the material, even if it would make the answer clearer.
+
+Other requirements:
 - Questions: ONE short sentence, under 12 words.
 - Answers: ONE short sentence, under 18 words (max 2 short sentences only if truly necessary).
 - Be extremely concise — no filler, no extra explanation.
-- Vary question types: definitions, cause-effect, compare-contrast, application.
+- Vary question types: definitions, cause-effect, compare-contrast, application — but ONLY where the material itself supports that angle.
 - Output ONLY the JSON array below. Do not include any introduction, comment, heading, or text before or after it. Do not wrap it in markdown or code fences.
-- Exact format, all 10 items, nothing else: [{"q":"Question?","a":"Answer."},...]${exclusionBlock}
+- Exact format, nothing else: [{"q":"Question?","a":"Answer."},...]${exclusionBlock}
 
-STUDY MATERIAL:
+STUDY MATERIAL (the ONLY source you may use):
 ${usedContent}`;
     }
 
