@@ -761,6 +761,7 @@ nav {
 .fc-question,
 .fc-answer {
     flex: 1;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -770,8 +771,20 @@ nav {
     font-size: clamp(1.25rem, 4vw, 1.6rem);
     line-height: 1.4;
     color: var(--text);
-    padding: 12px 0px;
+    padding: 12px 4px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+}
+
+/* When content is short, center-align it. When it overflows and needs to
+   scroll, switch to top-aligned so the reader starts at the beginning of
+   the text instead of the middle of it. */
+.fc-question.is-scrollable,
+.fc-answer.is-scrollable {
+    align-items: flex-start;
+    padding-top: 18px;
 }
 
 .fc-answer {
@@ -1167,4 +1180,4 @@ nav {
     height: 8px;
     background: url(img/underline.webp) center / 100% 100% no-repeat;
     pointer-events: none;
-}   
+}
