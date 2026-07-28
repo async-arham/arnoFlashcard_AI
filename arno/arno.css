@@ -56,6 +56,7 @@ body {
     background-color: #101010;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 /* ── TOP LOADER BAR ── */
@@ -172,6 +173,94 @@ nav {
 .hero {
     text-align: center;
     margin-bottom: 40px;
+}
+
+/* ── CONNOR PROMO STRIP ── */
+.connor-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px 6px 6px;
+    margin-bottom: 22px;
+    text-decoration: none;
+    box-shadow: var(--shadow-1);
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.connor-strip:hover {
+    border-color: var(--purple);
+    background: var(--surface-2);
+    transform: translateY(-1px);
+}
+
+.connor-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #5b8def, #a78bfa);
+}
+
+.connor-text {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.connor-full {
+    display: inline;
+}
+
+.connor-short {
+    display: none;
+}
+
+.connor-brand {
+    font-family: unbounded;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    -webkit-background-clip: text;
+    background: linear-gradient(135deg, #5b8def, #a78bfa);
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.connor-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    padding-left: 10px;
+    border-left: 1px solid var(--border);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.connor-cta i {
+    font-size: 0.85rem;
+    transition: transform 0.2s;
+}
+
+.connor-strip:hover .connor-cta i {
+    transform: translateX(2px);
 }
 
 .hero h1 {
@@ -905,6 +994,21 @@ nav {
     .hero p {
         font-size: 0.9rem;
     }
+
+    .connor-strip {
+        padding: 5px 12px 5px 5px;
+        gap: 7px;
+        margin-bottom: 18px;
+    }
+
+    .connor-text {
+        font-size: 0.75rem;
+    }
+
+    .connor-cta {
+        font-size: 0.72rem;
+        padding-left: 8px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -944,6 +1048,42 @@ nav {
 
     .chip {
         font-size: 0.6rem;
+    }
+
+    .connor-strip {
+        padding: 5px 10px 5px 5px;
+        gap: 6px;
+    }
+
+    .connor-full {
+        display: none;
+    }
+
+    .connor-short {
+        display: inline;
+    }
+
+    .connor-text {
+        font-size: 0.72rem;
+    }
+
+    .connor-cta {
+        font-size: 0.68rem;
+        padding-left: 7px;
+        gap: 3px;
+    }
+}
+
+/* Very small phones: drop the "Try it" label, keep just the arrow,
+   so the pill still reads as one clean line instead of shrinking
+   text past legibility. */
+@media (max-width: 360px) {
+    .connor-cta-label {
+        display: none;
+    }
+
+    .connor-cta {
+        padding-left: 6px;
     }
 }
 
@@ -1027,4 +1167,4 @@ nav {
     height: 8px;
     background: url(img/underline.webp) center / 100% 100% no-repeat;
     pointer-events: none;
-}
+}   
