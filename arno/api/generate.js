@@ -6,7 +6,7 @@
 // settings (Project → Settings → Environment Variables) instead of hardcoding
 // it here. The fallback below only exists so local testing still works if
 // you forget — replace/remove it once you've set the real env var.
-const API_KEY = process.env.OPENROUTER_API_KEY || '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';
+const API_KEY = process.env.OPENROUTER_API_KEY || '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';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'nvidia/nemotron-nano-12b-v2-vl:free';
 
