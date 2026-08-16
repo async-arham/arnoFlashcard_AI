@@ -2,11 +2,11 @@
 // reaches the browser. Deployed automatically when you push this repo to
 // Vercel (any file under /api becomes a serverless endpoint at /api/<name>).
 
-// ⚠️ Set OPENROUTER_API_KEY as an Environment Variable in your Vercel project
-// settings (Project → Settings → Environment Variables) instead of hardcoding
-// it here. The fallback below only exists so local testing still works if
-// you forget — replace/remove it once you've set the real env var.
-const API_KEY = process.env.OPENROUTER_API_KEY || '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';
+// Set OPENROUTER_API_KEY as an Environment Variable in your Vercel project
+// settings (Project → Settings → Environment Variables). No fallback key is
+// kept here — a hardcoded key in a repo gets scraped by bots and
+// auto-revoked by the provider within minutes/hours of being pushed public.
+const API_KEY = process.env.OPENROUTER_API_KEY;
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'nvidia/nemotron-nano-12b-v2-vl:free';
 
@@ -28,6 +28,14 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: { message: 'Method not allowed' } });
+    return;
+  }
+
+  if (!API_KEY) {
+    console.error('OPENROUTER_API_KEY is not set in the environment.');
+    res.status(500).json({
+      error: { message: 'Server is missing OPENROUTER_API_KEY. Set it in Vercel → Project → Settings → Environment Variables, then redeploy.' }
+    });
     return;
   }
 
