@@ -144,11 +144,6 @@
 
       </div>
 
-      <!-- <button class="btn-more" id="moreBtn">
-        <i class="ri-add-line"></i>
-        Generate 10 more cards
-      </button> -->
-
       <button class="reset-link" id="resetBtn"><i class="ri-restart-line"></i> Start over with a new file</button>
     </div>
 
@@ -172,7 +167,6 @@
     let wrongCount = 0;
     let fileContent = '';
     let isGenerating = false;
-    let isGeneratingMore = false;
     let etaTimer = null;
     let toastTimer = null;
     let advanceTimer = null;
@@ -209,7 +203,6 @@
     const fcRightCount = document.getElementById('fcRightCount');
     const fcToast = document.getElementById('fcToast');
     const resetBtn = document.getElementById('resetBtn');
-    const moreBtn = document.getElementById('moreBtn');
     const topLoader = document.getElementById('topLoader');
     const topFill = document.getElementById('topLoaderFill');
 
@@ -299,7 +292,6 @@
 
     // ── GENERATE ──
     genBtn.addEventListener('click', () => doGenerate());
-    moreBtn.addEventListener('click', () => doGenerateMore());
 
     function estimateTimings(contentLength) {
       const extraChars = Math.max(0, contentLength - 3000);
@@ -375,84 +367,6 @@ ${usedContent}`;
 
       isGenerating = false;
       genBtn.disabled = false;
-      stopETA();
-    }
-
-    // Turns raw provider errors into something a student can act on.
-    // Specifically detects OpenRouter's daily free-tier cap, since that
-    // error is common, predictable, and has a known reset time.
-    function friendlyErrorMessage(rawMsg) {
-      const msg = (rawMsg || '').toLowerCase();
-      const isDailyLimit = msg.includes('rate limit') && msg.includes('free-models-per-day');
-      const isGenericRateLimit = msg.includes('rate limit') || msg.includes('429');
-
-      if (isDailyLimit || isGenericRateLimit) {
-        const resetTime = nextUtcMidnightLocal();
-        return `Daily free-tier limit reached for this AI model. It resets at midnight UTC — that's ${resetTime} your local time. Try again after that, or ask whoever set this up to add OpenRouter credits to raise the limit.`;
-      }
-
-      return `${rawMsg} The free model may be overloaded right now — please try again in a moment.`;
-    }
-
-    // Computes the next UTC midnight and formats it in the visitor's local
-    // time zone, so "resets at midnight UTC" is something they can actually
-    // act on without doing the conversion themselves.
-    function nextUtcMidnightLocal() {
-      const now = new Date();
-      const next = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() + 1,
-        0, 0, 0
-      ));
-      return next.toLocaleString(undefined, {
-        weekday: 'short', hour: 'numeric', minute: '2-digit'
-      });
-    }
-
-    async function doGenerateMore() {
-      if (isGeneratingMore || isGenerating) return;
-      isGeneratingMore = true;
-      moreBtn.disabled = true;
-      const originalMoreLabel = moreBtn.innerHTML;
-      moreBtn.innerHTML = '<i class="ri-loader-4-line"></i> Generating 10 new cards…';
-      clearError();
-
-      const usedContent = fileContent.slice(0, 9000);
-      const { baseEta, baseTimeoutMs } = estimateTimings(usedContent.length);
-      setLoading(true, baseEta);
-      skeletonCard.style.display = 'none';
-      flashcardViewer.style.display = 'flex';
-
-      const prompt = buildPrompt(usedContent, usedQuestions, 10);
-      const result = await runGeneration(prompt, baseTimeoutMs);
-
-      if (result.cards) {
-        const usedLower = new Set(usedQuestions.map(q => q.trim().toLowerCase()));
-        const fresh = result.cards.filter(c => !usedLower.has(c.q.trim().toLowerCase()));
-
-        if (fresh.length) {
-          const insertAt = allCards.length;
-          allCards = allCards.concat(fresh);
-          usedQuestions = usedQuestions.concat(fresh.map(c => c.q));
-          cardsBadge.textContent = `${allCards.length} card${allCards.length !== 1 ? 's' : ''}`;
-          fcIndex = insertAt;
-          renderCard();
-          showToast(`${fresh.length} new card${fresh.length !== 1 ? 's' : ''} added`);
-        } else {
-          showToast("Couldn't find new material to ask about");
-        }
-        setProgress(100);
-        setTimeout(() => setLoading(false), 350);
-      } else {
-        setLoading(false);
-        showError(friendlyErrorMessage(result.errorMsg));
-      }
-
-      flashcardViewer.style.display = 'flex';
-      isGeneratingMore = false;
-      moreBtn.disabled = false;
-      moreBtn.innerHTML = originalMoreLabel;
       stopETA();
     }
 
@@ -744,8 +658,10 @@ ${usedContent}`;
       if (etaTimer) { clearInterval(etaTimer); etaTimer = null; }
     }
 
-
     // ── FRIENDLY ERRORS ──
+    // Turns raw provider errors into something a student can act on.
+    // Specifically detects OpenRouter's daily free-tier cap, since that
+    // error is common, predictable, and has a known reset time.
     function friendlyErrorMessage(raw) {
       const m = (raw || '').toLowerCase();
 
@@ -777,6 +693,9 @@ ${usedContent}`;
       return 'Something went wrong. Please try again in a moment.';
     }
 
+    // Computes the next UTC midnight and formats it in the visitor's local
+    // time zone, so "resets at midnight UTC" is something they can actually
+    // act on without doing the conversion themselves.
     function nextUtcMidnightLocal() {
       const now = new Date();
       const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
