@@ -7,9 +7,10 @@
 const API_KEY = process.env.GROQ_API_KEY;
 const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// Check https://console.groq.com/docs/models for currently available models.
+// Set GROQ_MODEL in Vercel env vars to change models without editing code.
 // Use a plain text instruct model (not vision / reasoning) for flashcards.
-const MODEL = 'llama-3.3-70b-versatile';
+// List models your key can use: https://api.groq.com/openai/v1/models
+const MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 
 export const config = {
   maxDuration: 60,
