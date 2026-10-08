@@ -20,11 +20,34 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
+    return;
+  }
+
+  // TEMPORARY DEBUG: open https://YOUR-SITE/api/generate?models=1 in the browser
+  // to list the model IDs your Groq key can use. Delete this block afterwards.
+  if (req.method === 'GET' && req.query?.models) {
+    if (!API_KEY) {
+      res.status(500).json({ error: { message: 'GROQ_API_KEY is not set.' } });
+      return;
+    }
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: { 'Authorization': `Bearer ${API_KEY}` }
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        res.status(502).json({ error: { message: `Groq ${r.status}: ${d?.error?.message || 'unknown'}` } });
+        return;
+      }
+      res.status(200).json({ models: (d.data || []).map(m => m.id).sort() });
+    } catch (e) {
+      res.status(500).json({ error: { message: e.message } });
+    }
     return;
   }
 
