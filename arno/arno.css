@@ -28,6 +28,7 @@
     --font-body: host grotesk;
 }
 
+
 *::selection {
     /* color: #111; */
     color: #063d4a;
